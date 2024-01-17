@@ -1,173 +1,68 @@
-export class ExtractionService {}
+import Papa from "papaparse";
+import { Survey } from "./Survey";
+import { SurveyMeasurements } from "./SurveyMeasurements";
 
-export class Survey {
-  private legs: SurveyLeg[] = [];
-  private stationMap: Map<string, SurveyStation> = new Map();
-
-  constructor() {}
-
-  addLeg(
-    fromStationName: string,
-    toStationName: string,
-    measurements: SurveyMeasurements
-  ): void {
-    if (
-      this.legs.some(
-        (l) =>
-          (l.fromStation.name === fromStationName &&
-            l.toStation.name === toStationName) ||
-          (l.fromStation.name === toStationName &&
-            l.toStation.name === fromStationName)
-      )
-    ) {
-      throw new Error("Leg between these two stations already exists");
-    }
-
-    this.tryAddStation(fromStationName);
-    this.tryAddStation(toStationName);
-
-    var leg = new SurveyLeg(
-      this.findStation(fromStationName)!,
-      this.findStation(toStationName)!,
-      measurements
-    );
-
-    this.legs.push(leg);
-  }
-
-  addSplay(fromStationName: string, measurements: SurveyMeasurements): void {
-    this.tryAddStation(fromStationName);
-    var station = this.findStation(fromStationName);
-    if (station) {
-      station.splays.push(measurements);
-    }
-  }
-
-  tryAddStation(name: string): boolean {
-    name = this.normalizeStationName(name);
-    if (this.stationMap.has(name)) {
-      return false;
-    }
-    this.stationMap.set(name, new SurveyStation(name));
-    return true;
-  }
-
-  findStation(name: string): SurveyStation | undefined {
-    name = this.normalizeStationName(name);
-    return this.stationMap.get(name);
-  }
-
-  public extractLrudsAndBacksights(): void {
-    this.legs.forEach((l) => {
-      l.extractLruds();
-      l.extractBacksight();
+class ExtractionService {
+  static parseCSV(file: File): Promise<Survey> {
+    return new Promise((resolve, reject) => {
+      Papa.parse<string[]>(file, {
+        complete: (results) => {
+          const processedData = ExtractionService.processData(results.data);
+          const survey = ExtractionService.createSurvey(processedData);
+          resolve(survey);
+        },
+        skipEmptyLines: true,
+        header: false,
+        dynamicTyping: true,
+        error: (error) => reject(error),
+      });
     });
   }
 
-  private normalizeStationName(name: string): string {
-    return name.trim().toLocaleLowerCase();
+  private static processData(data: string[][]): CsvRow[] {
+    return data
+      .filter((row) => Array.isArray(row) && row[0][0] !== "#") // filter out comments
+      .map(
+        (row) =>
+          ({
+            from: row[0],
+            to: row[1],
+            tape: row[2],
+            compass: row[3],
+            inclination: row[4],
+          } as CsvRow)
+      );
   }
-}
 
-export class SurveyStation {
-  constructor(public name: string, public splays: SurveyMeasurements[] = []) {}
-}
+  private static createSurvey(data: CsvRow[]): Survey {
+    const survey = new Survey();
+    data.forEach((row) => {
+      const toStation = row.to !== "-" ? row.to : null;
+      const isLeg = toStation !== null;
+      const surveyMeasurements = new SurveyMeasurements(
+        parseFloat(row.tape),
+        parseFloat(row.compass),
+        parseFloat(row.inclination)
+      );
 
-export class SurveyLeg {
-  constructor(
-    public fromStation: SurveyStation,
-    public toStation: SurveyStation,
-    public frontSight: SurveyMeasurements,
-    public backSight: SurveyMeasurements | null = null,
-    public left: number | null = null,
-    public right: number | null = null,
-    public up: number | null = null,
-    public down: number | null = null
-  ) {}
-
-  public extractLruds(): void {}
-
-  public extractBacksight(): void {
-    if (!this.fromStation || !this.toStation || !this.frontSight) {
-      return; // Invalid data, cannot calculate backsight
-    }
-
-    // Calculate backsight azimuth
-    const expectedBacksightAzimuth = this.calculateBacksightAzimuth(
-      this.frontSight.azimuth
-    );
-
-    // Calculate backsight inclination
-    const exectedBacksightInclination = this.calculateBacksightInclination(
-      this.frontSight.inclination
-    );
-
-    // Calculate backsight distance
-    const exectedBacksightDistance = this.frontSight.distance;
-
-    // Check if backsight measurements are within tolerance
-    const azimuthTolerance = 5; // degrees
-    const inclinationTolerance = 5; // degrees
-    const distanceTolerance = 1; // foot
-
-    this.toStation.splays.forEach((splay) => {
-      if (
-        this.isWithinTolerance(
-          splay.azimuth,
-          expectedBacksightAzimuth,
-          azimuthTolerance
-        ) &&
-        this.isWithinTolerance(
-          splay.inclination,
-          exectedBacksightInclination,
-          inclinationTolerance
-        ) &&
-        this.isWithinTolerance(
-          splay.distance,
-          exectedBacksightDistance,
-          distanceTolerance
-        )
-      ) {
-        if (this.backSight) {
-          this.backSight.azimuth = expectedBacksightAzimuth;
-          this.backSight.inclination = exectedBacksightInclination;
-          this.backSight.distance = exectedBacksightDistance;
-        } else {
-          this.backSight = new SurveyMeasurements(
-            exectedBacksightDistance,
-            expectedBacksightAzimuth,
-            exectedBacksightInclination
-          );
-        }
+      if (isLeg) {
+        survey.addLeg(row.from, toStation, surveyMeasurements);
+      } else {
+        survey.addSplay(row.from, surveyMeasurements);
       }
     });
-  }
 
-  private calculateBacksightAzimuth(azimuth: number): number {
-    let backsightAzimuth = azimuth + 180;
-    if (backsightAzimuth >= 360) {
-      backsightAzimuth -= 360;
-    }
-    return backsightAzimuth;
-  }
-
-  private calculateBacksightInclination(inclination: number): number {
-    return -inclination;
-  }
-
-  private isWithinTolerance(
-    value: number,
-    target: number,
-    tolerance: number
-  ): boolean {
-    return Math.abs(value - target) <= tolerance;
+    survey.extractLrudsAndBacksights();
+    return survey;
   }
 }
 
-export class SurveyMeasurements {
-  constructor(
-    public distance: number,
-    public azimuth: number,
-    public inclination: number
-  ) {}
+export { ExtractionService };
+
+interface CsvRow {
+  from: string;
+  to: string;
+  tape: string;
+  compass: string;
+  inclination: string;
 }
