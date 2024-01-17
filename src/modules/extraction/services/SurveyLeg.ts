@@ -4,7 +4,29 @@ import { SurveyStation } from "./SurveyStation";
 export class SurveyLeg {
   private static upThreshold: number = 45;
   private static downThreshold: number = -45;
-  private static sidewaysThreshold: number = 10;
+
+  // between up and down
+  private static isCloseToSideways = (
+    value: number | null | undefined
+  ): boolean => {
+    return !this.isCloseToUp(value) && !this.isCloseToDown(value);
+  };
+
+  private static isCloseToUp = (value: number | null | undefined): boolean => {
+    if (!value) {
+      return false;
+    }
+    return value > SurveyLeg.upThreshold;
+  };
+
+  private static isCloseToDown = (
+    value: number | null | undefined
+  ): boolean => {
+    if (!value) {
+      return false;
+    }
+    return value < SurveyLeg.downThreshold;
+  };
 
   constructor(
     public fromStation: SurveyStation,
@@ -18,7 +40,7 @@ export class SurveyLeg {
   ) {}
 
   public extractLruds(): void {
-    const splays = this.fromStation.splays;
+    const splays = this.toStation.splays;
 
     for (let i = 0; i < splays.length - 1; i++) {
       const lefSplay = splays[i] ? splays[i] : null;
@@ -26,35 +48,11 @@ export class SurveyLeg {
       const upSplay = splays[i + 2] ? splays[i + 2] : null;
       const downSplay = splays[i + 3] ? splays[i + 3] : null;
 
-      const isCloseToSideways = (splay: SurveyMeasurements | null): boolean => {
-        if (!splay) {
-          return false;
-        }
-        return Math.abs(splay.inclination) < SurveyLeg.sidewaysThreshold;
-      };
-
-      const isCloseToUp = (splay: SurveyMeasurements | null): boolean => {
-        if (!splay) {
-          return false;
-        }
-        return splay.inclination > SurveyLeg.upThreshold;
-      };
-
-      const isCloseToDown = (splay: SurveyMeasurements | null): boolean => {
-        if (!splay) {
-          return false;
-        }
-        return splay.inclination < SurveyLeg.downThreshold;
-      };
-
-      const isLeftCloseToSideways = isCloseToSideways(splays[i]);
-
       if (
-        isCloseToSideways(lefSplay) &&
-        isCloseToSideways(rightSplay) &&
-        isLeftCloseToSideways &&
-        isCloseToUp(upSplay) &&
-        isCloseToDown(downSplay)
+        SurveyLeg.isCloseToSideways(lefSplay?.inclination) &&
+        SurveyLeg.isCloseToSideways(rightSplay?.inclination) &&
+        SurveyLeg.isCloseToUp(upSplay?.inclination) &&
+        SurveyLeg.isCloseToDown(downSplay?.inclination)
       ) {
         this.left = lefSplay ? lefSplay.distance : null;
         this.right = rightSplay ? rightSplay.distance : null;
@@ -68,14 +66,13 @@ export class SurveyLeg {
 
   public extractBacksight(): void {
     // Calculate backsight azimuth
-    const expectedBacksightAzimuth = this.calculateBacksightAzimuth(
+    const expectedBacksightAzimuth = this.calculateExpectedBacksightAzimuth(
       this.frontSight.azimuth
     );
 
     // Calculate backsight inclination
-    const exectedBacksightInclination = this.calculateBacksightInclination(
-      this.frontSight.inclination
-    );
+    const exectedBacksightInclination =
+      this.calculateExpectedBacksightInclination(this.frontSight.inclination);
 
     // Calculate backsight distance
     const exectedBacksightDistance = this.frontSight.distance;
@@ -118,7 +115,7 @@ export class SurveyLeg {
     });
   }
 
-  private calculateBacksightAzimuth(azimuth: number): number {
+  private calculateExpectedBacksightAzimuth(azimuth: number): number {
     let backsightAzimuth = azimuth + 180;
     if (backsightAzimuth >= 360) {
       backsightAzimuth -= 360;
@@ -126,7 +123,7 @@ export class SurveyLeg {
     return backsightAzimuth;
   }
 
-  private calculateBacksightInclination(inclination: number): number {
+  private calculateExpectedBacksightInclination(inclination: number): number {
     return -inclination;
   }
 
