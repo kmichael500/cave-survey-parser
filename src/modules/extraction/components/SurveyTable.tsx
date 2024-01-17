@@ -74,8 +74,8 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
 
   const dataSource = survey.legs.map((leg: SurveyLeg, index: number) => ({
     key: index,
-    fromStation: leg.fromStation.name,
-    toStation: leg.toStation.name,
+    fromStation: leg.fromStation.getDisplayName(),
+    toStation: leg.toStation.getDisplayName(),
     frontSightAzimuth: leg.frontSight.azimuth,
     frontSightInclination: leg.frontSight.inclination,
     frontSightDistance: leg.frontSight.distance,
@@ -92,4 +92,4 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
   return <Table dataSource={dataSource} columns={columns} />;
 };
 
-export default SurveyTable;
+export { SurveyTable };
