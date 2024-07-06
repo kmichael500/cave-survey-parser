@@ -32,11 +32,11 @@ export class SurveyLeg {
     public fromStation: SurveyStation,
     public toStation: SurveyStation,
     public frontSight: SurveyMeasurements,
-    public backSight: SurveyMeasurements | null = null,
-    public left: number | null = null,
-    public right: number | null = null,
-    public up: number | null = null,
-    public down: number | null = null
+    public backSight: SurveyMeasurements | null | undefined = null,
+    public left: number | null | undefined = null,
+    public right: number | null | undefined = null,
+    public up: number | null | undefined = null,
+    public down: number | null | undefined = null
   ) {}
 
   public extractLruds(): void {
@@ -66,13 +66,14 @@ export class SurveyLeg {
 
   public extractBacksight(): void {
     // Calculate backsight azimuth
-    const expectedBacksightAzimuth = this.calculateExpectedBacksightAzimuth(
-      this.frontSight.azimuth
-    );
+    const expectedBacksightAzimuth = this.frontSight.azimuth
+      ? this.calculateExpectedBacksightAzimuth(this.frontSight.azimuth)
+      : null;
 
     // Calculate backsight inclination
-    const exectedBacksightInclination =
-      this.calculateExpectedBacksightInclination(this.frontSight.inclination);
+    const exectedBacksightInclination = this.frontSight.inclination
+      ? this.calculateExpectedBacksightInclination(this.frontSight.inclination)
+      : null;
 
     // Calculate backsight distance
     const exectedBacksightDistance = this.frontSight.distance;
@@ -84,16 +85,22 @@ export class SurveyLeg {
 
     this.toStation.splays.forEach((splay) => {
       if (
+        splay.azimuth &&
+        expectedBacksightAzimuth &&
         this.isWithinTolerance(
           splay.azimuth,
           expectedBacksightAzimuth,
           azimuthTolerance
         ) &&
+        splay.inclination &&
+        exectedBacksightInclination &&
         this.isWithinTolerance(
           splay.inclination,
           exectedBacksightInclination,
           inclinationTolerance
         ) &&
+        splay.distance &&
+        exectedBacksightDistance &&
         this.isWithinTolerance(
           splay.distance,
           exectedBacksightDistance,

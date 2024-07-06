@@ -9,6 +9,57 @@ export class Survey {
 
   constructor() {}
 
+  replaceLeg(
+    oldFromStationName: string,
+    oldToStationName: string,
+    newLeg: SurveyLeg
+  ): void {
+    oldFromStationName = this.normalizeStationName(oldFromStationName);
+    oldToStationName = this.normalizeStationName(oldToStationName);
+    // Find the index of the leg to replace
+    const legIndex = this.legs.findIndex(
+      (leg) =>
+        this.normalizeStationName(leg.fromStation.name) ===
+          oldFromStationName &&
+        this.normalizeStationName(leg.toStation.name) === oldToStationName
+    );
+
+    if (legIndex === -1) {
+      throw new Error("Leg does not exist between the specified stations");
+    }
+
+    // Replace the leg
+    this.legs[legIndex] = newLeg;
+
+    // Update the station map with new stations from the new leg
+    this.updateStation(oldFromStationName, newLeg.fromStation);
+    this.updateStation(oldToStationName, newLeg.toStation);
+  }
+
+  updateStation(oldStationName: string, station: SurveyStation): void {
+    oldStationName = this.normalizeStationName(oldStationName);
+
+    if (!this.stationMap.has(oldStationName)) {
+      throw new Error("Station does not exist");
+    }
+
+    // Replace the station in the station map
+    this.stationMap.set(oldStationName, station);
+
+    // Update any legs that reference the old station
+    this.legs.forEach((leg) => {
+      if (
+        this.normalizeStationName(leg.fromStation.name) ===
+        this.normalizeStationName(oldStationName)
+      ) {
+        leg.fromStation = station;
+      }
+      if (leg.toStation.name === oldStationName) {
+        leg.toStation = station;
+      }
+    });
+  }
+
   addLeg(
     fromStationName: string,
     toStationName: string,
@@ -68,6 +119,6 @@ export class Survey {
   }
 
   private normalizeStationName(name: string): string {
-    return name.trim().toLocaleLowerCase();
+    return name.trim().toUpperCase();
   }
 }

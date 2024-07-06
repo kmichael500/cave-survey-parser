@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Upload } from "antd";
-import { ExtractionService } from "./modules/extraction/services/ExtractionService";
-import { RcFile } from "antd/es/upload";
 import { FileUploader } from "./modules/extraction/components/FileUploader";
 import { SurveyTable } from "./modules/extraction/components/SurveyTable";
 import { Survey } from "./modules/extraction/services/Survey";
@@ -16,8 +14,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div>
-      <FileUploader onParsed={onParsed} />
+    <div style={{ height: "100vh" }}>
+      {!survey && <FileUploader onParsed={onParsed} />}
       {survey && <SurveyTable survey={survey} />}
     </div>
   );

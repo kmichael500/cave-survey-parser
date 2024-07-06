@@ -25,8 +25,8 @@ class ExtractionService {
       .map(
         (row) =>
           ({
-            from: row[0],
-            to: row[1],
+            from: this.getDisplayName(row[0]),
+            to: this.getDisplayName(row[1]),
             tape: row[2],
             compass: row[3],
             inclination: row[4],
@@ -54,6 +54,13 @@ class ExtractionService {
 
     survey.extractLrudsAndBacksights();
     return survey;
+  }
+
+  private static getDisplayName(name: string): string {
+    console.log(name);
+    name = name.trim().split("@")[0].toUpperCase();
+
+    return name;
   }
 }
 
