@@ -36,11 +36,19 @@ export class SurveyLeg {
     public left: number | null | undefined = null,
     public right: number | null | undefined = null,
     public up: number | null | undefined = null,
-    public down: number | null | undefined = null
-  ) {}
+    public down: number | null | undefined = null,
+    public passageHeight: number | null | undefined = null
+  ) { }
 
   public extractLruds(): void {
     const splays = this.toStation.splays;
+
+    if (splays.length === 0) {
+      this.left = -1;
+      this.right = -1;
+      this.up = -1;
+      this.down = -1;
+    }
 
     for (let i = 0; i < splays.length - 1; i++) {
       const lefSplay = splays[i] ? splays[i] : null;
@@ -54,12 +62,21 @@ export class SurveyLeg {
         SurveyLeg.isCloseToUp(upSplay?.inclination) &&
         SurveyLeg.isCloseToDown(downSplay?.inclination)
       ) {
-        this.left = lefSplay ? lefSplay.distance : null;
-        this.right = rightSplay ? rightSplay.distance : null;
+        this.left = lefSplay ? lefSplay.distance : -1;
+        this.right = rightSplay ? rightSplay.distance : -1;
 
-        this.up = upSplay ? upSplay.distance : null;
-        this.down = downSplay ? downSplay.distance : null;
+        if (upSplay && downSplay && upSplay.distance && downSplay.distance) {
+          this.passageHeight = upSplay.distance + downSplay.distance;
+        }
+
+        this.up = upSplay ? upSplay.distance : -1;
+        this.down = downSplay ? downSplay.distance : -1;
         break;
+      } else {
+        this.left = -1;
+        this.right = -1;
+        this.up = -1;
+        this.down = -1;
       }
     }
   }
