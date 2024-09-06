@@ -2,7 +2,7 @@
   "name": "cave-survey-parser",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://github.com/kmichael500/cave-survey-parser",
+  "homepage": "https://kmichael500.github.io/cave-survey-parser/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
