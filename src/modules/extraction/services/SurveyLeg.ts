@@ -38,7 +38,7 @@ export class SurveyLeg {
     public up: number | null | undefined = null,
     public down: number | null | undefined = null,
     public passageHeight: number | null | undefined = null
-  ) { }
+  ) {}
 
   public extractLruds(): void {
     const splays = this.toStation.splays;
@@ -125,14 +125,14 @@ export class SurveyLeg {
         )
       ) {
         if (this.backSight) {
-          this.backSight.azimuth = expectedBacksightAzimuth;
-          this.backSight.inclination = exectedBacksightInclination;
-          this.backSight.distance = exectedBacksightDistance;
+          this.backSight.azimuth = splay.azimuth;
+          this.backSight.inclination = splay.inclination;
+          this.backSight.distance = splay.distance;
         } else {
           this.backSight = new SurveyMeasurements(
-            exectedBacksightDistance,
-            expectedBacksightAzimuth,
-            exectedBacksightInclination
+            splay.distance,
+            splay.azimuth,
+            splay.inclination
           );
         }
       }
