@@ -96,23 +96,25 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
   const [dataSource, setDataSource] = useState(
     survey.legs.map(
       (leg: SurveyLeg, index: number) =>
-      ({
-        key: `${leg.fromStation.name}-${leg.toStation.name}}`,
-        splays: leg.toStation.splays,
-        fromStationName: leg.fromStation.name,
-        toStationName: leg.toStation.name,
-        frontSightAzimuth: leg.frontSight.azimuth,
-        frontSightInclination: leg.frontSight.inclination,
-        frontSightDistance: leg.frontSight.distance,
-        backSightAzimuth: leg.backSight?.azimuth,
-        backSightInclination: leg.backSight?.inclination,
-        backSightDistance: leg.backSight?.distance,
-        left: leg.left,
-        right: leg.right,
-        up: leg.up,
-        down: leg.down,
-        passageHeight: leg.passageHeight,
-      } as SurveyLegTableRecord)
+        ({
+          key: `${leg.fromStation.name}-${leg.toStation.name}}`,
+          splays: leg.toStation.splays,
+          fromStationName: leg.fromStation.name,
+          toStationName: leg.toStation.name,
+          frontSightAzimuth: leg.frontSight.azimuth,
+          frontSightInclination: leg.frontSight.inclination,
+          frontSightDistance: leg.frontSight.distance,
+          backSightAzimuth: leg.backSight?.azimuth,
+          backSightInclination: leg.backSight?.inclination,
+          backSightDistance: leg.backSight?.distance,
+          backSightAzimuthDiff: leg.backSightAzimuthDiff,
+          backSightInclinationDiff: leg.backSightInclinationDiff,
+          left: leg.left,
+          right: leg.right,
+          up: leg.up,
+          down: leg.down,
+          passageHeight: leg.passageHeight,
+        } as SurveyLegTableRecord)
     )
   );
 
@@ -173,6 +175,12 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
               key: "backSightAzimuth",
               editable: true,
             },
+            {
+              title: "Azimuth Difference",
+              dataIndex: "backSightAzimuthDiff",
+              key: "backSightAzimuthDiff",
+              editable: false,
+            },
           ],
         },
         {
@@ -189,6 +197,12 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
               dataIndex: "backSightInclination",
               key: "backSightInclination",
               editable: true,
+            },
+            {
+              title: "Inclination Difference",
+              dataIndex: "backSightInclinationDiff",
+              key: "backSightInclinationDiff",
+              editable: false,
             },
           ],
         },
@@ -224,7 +238,7 @@ const SurveyTable: React.FC<SurveyTableProps> = ({ survey }) => {
       dataIndex: "passageHeight",
       key: "passageHeight",
       editable: true,
-    }
+    },
   ];
 
   const expandedRowRender = (record: SurveyLegTableRecord) => {
@@ -450,6 +464,8 @@ export interface SurveyLegTableRecord {
   frontSightDistance?: number;
   backSightAzimuth?: number;
   backSightInclination?: number;
+  backSightAzimuthDiff?: number;
+  backSightInclinationDiff?: number;
   backSightDistance?: number;
   left?: number;
   right?: number;

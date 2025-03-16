@@ -12,6 +12,21 @@ export class SurveyLeg {
     return !this.isCloseToUp(value) && !this.isCloseToDown(value);
   };
 
+  public backSightAzimuthDiff: number | null = null;
+  public backSightInclinationDiff: number | null = null;
+
+  constructor(
+    public fromStation: SurveyStation,
+    public toStation: SurveyStation,
+    public frontSight: SurveyMeasurements,
+    public backSight: SurveyMeasurements | null | undefined = null,
+    public left: number | null | undefined = null,
+    public right: number | null | undefined = null,
+    public up: number | null | undefined = null,
+    public down: number | null | undefined = null,
+    public passageHeight: number | null | undefined = null
+  ) {}
+
   private static isCloseToUp = (value: number | null | undefined): boolean => {
     if (!value) {
       return false;
@@ -27,18 +42,6 @@ export class SurveyLeg {
     }
     return value < SurveyLeg.downThreshold;
   };
-
-  constructor(
-    public fromStation: SurveyStation,
-    public toStation: SurveyStation,
-    public frontSight: SurveyMeasurements,
-    public backSight: SurveyMeasurements | null | undefined = null,
-    public left: number | null | undefined = null,
-    public right: number | null | undefined = null,
-    public up: number | null | undefined = null,
-    public down: number | null | undefined = null,
-    public passageHeight: number | null | undefined = null
-  ) {}
 
   public extractLruds(): void {
     const splays = this.toStation.splays;
@@ -66,7 +69,9 @@ export class SurveyLeg {
         this.right = rightSplay ? rightSplay.distance : -1;
 
         if (upSplay && downSplay && upSplay.distance && downSplay.distance) {
-          this.passageHeight = upSplay.distance + downSplay.distance;
+          this.passageHeight = parseFloat(
+            (upSplay.distance + downSplay.distance).toFixed(2)
+          );
         }
 
         this.up = upSplay ? upSplay.distance : -1;
@@ -135,6 +140,16 @@ export class SurveyLeg {
             splay.inclination
           );
         }
+
+        this.backSightAzimuthDiff = parseFloat(
+          (splay.azimuth - expectedBacksightAzimuth).toFixed(2)
+        );
+        this.backSightAzimuthDiff = parseFloat(
+          Math.abs(splay.azimuth - expectedBacksightAzimuth).toFixed(2)
+        );
+        this.backSightInclinationDiff = parseFloat(
+          Math.abs(splay.inclination - exectedBacksightInclination).toFixed(2)
+        );
       }
     });
   }
